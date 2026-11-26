@@ -39,7 +39,7 @@ jobs:
         run: bun run test:visual:baseline
 
       - name: Upload refreshed snapshots
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: visual-baseline-snapshots
           path: tests/visual/snapshots/
