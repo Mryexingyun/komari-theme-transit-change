@@ -283,6 +283,12 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
+    // Windows 上编辑器/工具的原子写入会在源目录里短暂生成隐藏的 `.<name>.tmpdir`
+    // 暂存目录；chokidar 一旦监视到正在被删除的临时文件就会以 EBUSY 直接杀掉 dev
+    // server。这类文件不是源码，忽略掉比让整个开发服务器崩掉更合理。
+    watch: {
+      ignored: ['**/.*.tmpdir/**', '**/*.tmp', '**/.*.tmp'],
+    },
     proxy: {
       '/api': {
         target: devApiTarget,

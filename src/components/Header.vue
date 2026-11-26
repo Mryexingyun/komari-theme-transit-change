@@ -10,6 +10,7 @@ import { useAppStore } from '@/stores/app'
 
 const VisitorInfo = defineAsyncComponent(() => import('@/components/VisitorInfo.vue'))
 const WallpaperManagerDialog = defineAsyncComponent(() => import('@/components/WallpaperManagerDialog.vue'))
+const CoverageMapDialog = defineAsyncComponent(() => import('@/components/CoverageMapDialog.vue'))
 
 const router = useRouter()
 const appStore = useAppStore()
@@ -19,6 +20,7 @@ const isScrolled = inject<ReturnType<typeof ref<boolean>>>('isScrolled', ref(fal
 
 const siteFavicon = ref('/favicon.ico')
 const wallpaperDialogOpen = ref(false)
+const coverageMapOpen = ref(false)
 
 const actionButtons = computed(() => {
   const themeTitleMap = {
@@ -53,6 +55,12 @@ const actionButtons = computed(() => {
   })
 
   buttons.push({
+    title: '点亮地图',
+    icon: 'tabler:world',
+    action: 'openCoverageMap',
+  })
+
+  buttons.push({
     title: `${themeTitleMap[appStore.themeMode]}（点击切换）`,
     icon: themeIconMap[appStore.themeMode],
     action: 'toggleTheme',
@@ -83,6 +91,9 @@ function handleButtonClick(action: string) {
     case 'openWallpaper':
       wallpaperDialogOpen.value = true
       break
+    case 'openCoverageMap':
+      coverageMapOpen.value = true
+      break
     case 'toggleHomeTools':
       appStore.homeAdvancedToolsVisible = !appStore.homeAdvancedToolsVisible
       break
@@ -97,12 +108,31 @@ function handleButtonClick(action: string) {
 }
 
 const sitename = computed(() => appStore.publicSettings?.sitename || 'Komari Monitor')
+
+/** 点亮地图里点了某个国家：关掉弹窗，直接进该地区的节点详情。 */
+function openRegionNode(uuid: string, code: string) {
+  if (!uuid)
+    return
+  coverageMapOpen.value = false
+  void recordVisitorEvent({
+    event: 'coverage_region_open',
+    path: router.currentRoute.value.path,
+    route: String(router.currentRoute.value.name ?? ''),
+    target: code,
+  })
+  void router.push({ name: 'instance-detail', params: { id: uuid } })
+}
 </script>
 
 <template>
   <!-- 访客 IP 组件，全局悬浮 -->
   <VisitorInfo v-if="!appStore.loading && appStore.visitorInfoEnabled" />
   <WallpaperManagerDialog v-if="wallpaperDialogOpen" v-model:open="wallpaperDialogOpen" />
+  <CoverageMapDialog
+    v-if="coverageMapOpen"
+    v-model:open="coverageMapOpen"
+    @open-region="openRegionNode"
+  />
 
   <header
     class="site-header transition-all duration-200 top-0 sticky z-10 border-b border-transparent"
